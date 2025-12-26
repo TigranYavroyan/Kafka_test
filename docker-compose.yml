@@ -23,6 +23,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKAJS_NO_PARTITIONER_WARNING: "1"
     volumes:
       - kafka_data:/kafka/data
     healthcheck:
@@ -33,6 +34,17 @@ services:
       timeout: 5s
       retries: 30
       start_period: 20s
+
+  kafka-init:
+    image: apache/kafka:3.7.1
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "/opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic user.get.all --partitions 1 --replication-factor 1 &&
+       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic user.get.all.reply --partitions 1 --replication-factor 1"
+
 
   producer:
     build:
@@ -49,8 +61,8 @@ services:
     volumes:
       - ./producer:/app
       - /app/node_modules
-    expose:
-      - "3001"
+    ports:
+      - 3001:3001
 
   consumer:
     build:
