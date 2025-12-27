@@ -21,4 +21,9 @@ export class AppService implements OnModuleInit {
     const obs = this.kafka.send<User[], object>('user.get.all', {});
     return await firstValueFrom(obs.pipe(timeout(5000)));
   }
+
+  emitUserCreated(user: User) {
+    // emit() returns an Observable<void> (ack from client), not a reply payload
+    return this.kafka.emit<User>('user.created', user);
+  }
 }
